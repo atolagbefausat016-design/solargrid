@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SolarGrid — Admin Dashboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --solar: #F59E0B;
+  --solar-dim: #FEF3C7;
+  --green: #10B981;
+  --green-dim: #D1FAE5;
+  --red: #EF4444;
+  --red-dim: #FEE2E2;
+  --blue: #3B82F6;
+  --blue-dim: #DBEAFE;
+  --purple: #8B5CF6;
+  --surface: #ffffff;
+  --surface2: #F9FAFB;
+  --surface3: #F3F4F6;
+  --border: rgba(0,0,0,0.1);
+  --border2: rgba(0,0,0,0.18);
+  --text: #111827;
+  --muted: #6B7280;
+  --hint: #9CA3AF;
+  --r: 10px;
+  --rr: 14px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface: #1F2937;
+    --surface2: #111827;
+    --surface3: #0F172A;
+    --border: rgba(255,255,255,0.1);
+    --border2: rgba(255,255,255,0.2);
+    --text: #F9FAFB;
+    --muted: #9CA3AF;
+    --hint: #6B7280;
+    --solar-dim: #451a03;
+    --green-dim: #064e3b;
+    --red-dim: #450a0a;
+    --blue-dim: #1e3a5f;
+  }
+}
+
+html, body { height: 100%; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--surface3);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* LAYOUT */
+.app {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 210px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 0.5px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.brand {
+  padding: 20px 16px 16px;
+  border-bottom: 0.5px solid var(--border);
+}
+.brand-icon {
+  width: 36px; height: 36px;
+  background: var(--solar);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 10px;
+}
+.brand-name { font-size: 14px; font-weight: 600; }
+.brand-sub { font-size: 10px; color: var(--muted); font-family: 'Space Mono', monospace; letter-spacing: 0.05em; margin-top: 2px; }
+
+.nav { flex: 1; padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 9px;
+  cursor: pointer; font-size: 13px; color: var(--muted);
+  transition: all 0.15s; border: none; background: none;
+  width: 100%; text-align: left; font-family: 'DM Sans', sans-serif;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: var(--solar-dim); color: #92400E; font-weight: 500; }
+@media (prefers-color-scheme: dark) {
+  .nav-item.active { background: #451a03; color: #fbbf24; }
+}
+.nav-item i { font-size: 17px; }
+.nav-badge {
+  margin-left: auto; font-size: 10px;
+  background: var(--red); color: #fff;
+  border-radius: 10px; padding: 1px 6px; font-weight: 600;
+}
+
+.sidebar-footer {
+  padding: 14px 14px;
+  border-top: 0.5px solid var(--border);
+}
+.role-pill {
+  font-size: 10px; font-family: 'Space Mono', monospace;
+  background: var(--green-dim); color: #065f46;
+  padding: 3px 9px; border-radius: 20px; display: inline-block; margin-top: 4px;
+}
+@media (prefers-color-scheme: dark) { .role-pill { background: #064e3b; color: #6ee7b7; } }
+
+/* MAIN */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+.topbar {
+  padding: 14px 24px;
+  background: var(--surface);
+  border-bottom: 0.5px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.page-title { font-size: 16px; font-weight: 600; }
+.topbar-right { display: flex; align-items: center; gap: 14px; }
+.grid-status { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
+.pulse {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green); position: relative;
+}
+.pulse::after {
+  content: ''; position: absolute; inset: -3px; border-radius: 50%;
+  background: var(--green); opacity: 0.3;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{transform:scale(1);opacity:.3} 50%{transform:scale(1.6);opacity:0} }
+
+.alert-btn {
+  position: relative; background: none;
+  border: 0.5px solid var(--border);
+  border-radius: 8px; padding: 7px 12px; cursor: pointer;
+  color: var(--muted); font-size: 13px;
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+}
+.alert-btn:hover { background: var(--surface2); color: var(--text); }
+.alert-dot {
+  position: absolute; top: 6px; right: 6px;
+  width: 6px; height: 6px; background: var(--red); border-radius: 50%;
+}
+
+.content {
+  flex: 1; overflow-y: auto;
+  padding: 20px 24px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+/* KPI STRIP */
+.kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.kpi {
+  background: var(--surface); border: 0.5px solid var(--border);
+  border-radius: var(--r); padding: 14px 16px;
+}
+.kpi-label { font-size: 11px; color: var(--muted); margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.07em; }
+.kpi-value { font-size: 26px; font-weight: 600; font-family: 'Space Mono', monospace; line-height: 1; }
+.kpi-unit { font-size: 14px; }
+.kpi-sub { font-size: 11px; color: var(--muted); margin-top: 5px; }
+.kpi.solar .kpi-value { color: var(--solar); }
+.kpi.load .kpi-value { color: var(--blue); }
+.kpi.revenue .kpi-value { color: var(--green); }
+.kpi.batt .kpi-value { color: var(--purple); }
+
+/* SECTION GRID */
+.section-grid {
+  display: grid;
+  grid-template-columns: 1fr 290px;
+  gap: 16px;
+  flex: 1; min-height: 0;
+}
+
+/* PANEL */
+.panel {
+  background: var(--surface); border: 0.5px solid var(--border);
+  border-radius: var(--rr); overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.panel-head {
+  padding: 13px 16px; border-bottom: 0.5px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.panel-title { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+
+.search-input {
+  font-size: 12px; border: 0.5px solid var(--border);
+  border-radius: 7px; padding: 6px 11px;
+  background: var(--surface2); color: var(--text); width: 150px;
+  font-family: 'DM Sans', sans-serif; outline: none;
+  transition: border-color 0.15s;
+}
+.search-input:focus { border-color: var(--border2); }
+.search-input::placeholder { color: var(--hint); }
+
+/* TABLE */
+.meter-table { overflow-y: auto; flex: 1; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th {
+  font-size: 10px; color: var(--muted); font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  padding: 9px 13px; text-align: left;
+  background: var(--surface2); border-bottom: 0.5px solid var(--border);
+  position: sticky; top: 0; z-index: 1;
+}
+td { padding: 11px 13px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--surface2); cursor: pointer; }
+tr.selected td { background: #FFFBEB; }
+@media (prefers-color-scheme: dark) { tr.selected td { background: #1c1408; } }
+
+.meter-name { font-weight: 500; font-size: 12px; }
+.meter-addr { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.status-pill {
+  font-size: 10px; font-weight: 600;
+  padding: 3px 9px; border-radius: 20px;
+  display: inline-block; font-family: 'Space Mono', monospace;
+}
+.status-pill.on { background: var(--green-dim); color: #065f46; }
+.status-pill.off { background: var(--red-dim); color: #991b1b; }
+.status-pill.low { background: var(--solar-dim); color: #92400E; }
+@media (prefers-color-scheme: dark) {
+  .status-pill.on { background: #064e3b; color: #6ee7b7; }
+  .status-pill.off { background: #450a0a; color: #fca5a5; }
+  .status-pill.low { background: #451a03; color: #fbbf24; }
+}
+
+.load-bar-wrap { width: 72px; }
+.load-bar-bg { height: 4px; background: var(--surface3); border-radius: 2px; overflow: hidden; }
+.load-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
+.load-val { font-size: 11px; color: var(--muted); margin-top: 3px; font-family: 'Space Mono', monospace; }
+
+.credit-val { font-family: 'Space Mono', monospace; font-size: 12px; }
+.credit-low { color: var(--red); font-weight: 600; }
+
+.action-btns { display: flex; gap: 5px; }
+.btn-sm {
+  border: 0.5px solid var(--border); background: var(--surface2);
+  border-radius: 6px; padding: 5px 9px; cursor: pointer;
+  font-size: 11px; color: var(--muted); transition: all 0.15s;
+  font-family: 'DM Sans', sans-serif;
+}
+.btn-sm:hover { background: var(--surface); color: var(--text); border-color: var(--border2); }
+.btn-sm.danger { color: var(--red); border-color: #fca5a5; }
+.btn-sm.danger:hover { background: var(--red-dim); }
+.btn-sm.success { color: var(--green); border-color: #6ee7b7; }
+.btn-sm.success:hover { background: var(--green-dim); }
+
+/* RIGHT COLUMN */
+.right-col { display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+
+/* ALERTS */
+.alert-list { display: flex; flex-direction: column; }
+.alert-item {
+  padding: 11px 15px; border-bottom: 0.5px solid var(--border);
+  display: flex; gap: 10px; align-items: flex-start;
+  cursor: pointer; transition: background 0.1s;
+}
+.alert-item:last-child { border-bottom: none; }
+.alert-item:hover { background: var(--surface2); }
+.alert-icon {
+  font-size: 14px; width: 26px; height: 26px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.alert-icon.warn { background: var(--solar-dim); color: #92400E; }
+.alert-icon.crit { background: var(--red-dim); color: #991b1b; }
+.alert-icon.info { background: var(--blue-dim); color: #1e40af; }
+@media (prefers-color-scheme: dark) {
+  .alert-icon.warn { background: #451a03; color: #fbbf24; }
+  .alert-icon.crit { background: #450a0a; color: #fca5a5; }
+  .alert-icon.info { background: #1e3a5f; color: #93c5fd; }
+}
+.alert-title { font-size: 12px; font-weight: 500; }
+.alert-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.alert-time { font-size: 10px; color: var(--hint); margin-top: 3px; font-family: 'Space Mono', monospace; }
+
+/* BATTERY */
+.batt-widget { padding: 15px 16px; }
+.batt-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
+.batt-outer { height: 14px; background: var(--surface2); border-radius: 7px; overflow: hidden; border: 0.5px solid var(--border); }
+.batt-fill { height: 100%; border-radius: 7px; background: linear-gradient(90deg, #10B981, #34D399); width: 72%; }
+.batt-stats { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--muted); }
+.batt-pct { font-size: 22px; font-weight: 600; font-family: 'Space Mono', monospace; color: var(--green); }
+
+/* MINI CHART */
+.mini-chart { padding: 15px 16px; }
+.chart-bars { display: flex; align-items: flex-end; gap: 5px; height: 64px; margin-top: 12px; }
+.bar { flex: 1; border-radius: 4px 4px 0 0; transition: opacity 0.2s; cursor: pointer; }
+.bar:hover { opacity: 0.7; }
+.chart-labels { display: flex; gap: 5px; margin-top: 5px; }
+.chart-lbl { flex: 1; text-align: center; font-size: 9px; color: var(--hint); font-family: 'Space Mono', monospace; }
+
+/* DRAWER */
+.drawer {
+  position: fixed; right: 0; top: 0; bottom: 0; width: 300px;
+  background: var(--surface); border-left: 0.5px solid var(--border);
+  transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  z-index: 100; overflow-y: auto; padding: 20px;
+  display: flex; flex-direction: column; gap: 14px;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.08);
+}
+.drawer.open { transform: translateX(0); }
+
+.drawer-header { display: flex; align-items: center; justify-content: space-between; }
+.drawer-title { font-size: 14px; font-weight: 600; }
+.close-btn {
+  background: none; border: 0.5px solid var(--border);
+  border-radius: 7px; padding: 5px 9px; cursor: pointer;
+  color: var(--muted); font-size: 12px; font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.close-btn:hover { background: var(--surface2); color: var(--text); }
+
+.drawer-section { margin-top: 2px; }
+.drawer-section-lbl {
+  font-size: 10px; color: var(--muted); text-transform: uppercase;
+  letter-spacing: 0.07em; margin-bottom: 8px;
+}
+.info-row {
+  display: flex; justify-content: space-between;
+  padding: 7px 0; border-bottom: 0.5px solid var(--border);
+  font-size: 12px; gap: 12px;
+}
+.info-row:last-child { border: none; }
+.info-key { color: var(--muted); }
+.info-val { font-weight: 500; font-family: 'Space Mono', monospace; font-size: 11px; text-align: right; }
+
+.limit-control { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.limit-control input[type=range] {
+  flex: 1; accent-color: var(--blue);
+  height: 4px; cursor: pointer;
+}
+.limit-val { font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 600; color: var(--blue); min-width: 44px; }
+
+.token-input {
+  width: 100%; border: 0.5px solid var(--border);
+  border-radius: 8px; padding: 8px 12px; font-size: 13px;
+  font-family: 'Space Mono', monospace;
+  background: var(--surface2); color: var(--text);
+  margin-top: 8px; outline: none; transition: border-color 0.15s;
+}
+.token-input:focus { border-color: var(--border2); }
+.token-result { font-size: 12px; color: var(--green); margin-top: 6px; display: none; font-family: 'Space Mono', monospace; }
+
+.usage-bars { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.usage-row { display: flex; align-items: center; gap: 9px; }
+.usage-day { font-size: 10px; color: var(--muted); width: 24px; font-family: 'Space Mono', monospace; }
+.usage-track { flex: 1; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.usage-fill { height: 100%; border-radius: 3px; background: var(--solar); }
+.usage-kwh { font-size: 10px; color: var(--muted); font-family: 'Space Mono', monospace; width: 36px; text-align: right; }
+
+.drawer-actions { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+.drawer-btn {
+  flex: 1; min-width: 80px;
+  border: 0.5px solid var(--border); background: var(--surface2);
+  border-radius: 9px; padding: 9px 12px; cursor: pointer;
+  font-size: 12px; color: var(--text); font-family: 'DM Sans', sans-serif;
+  text-align: center; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.drawer-btn:hover { background: var(--surface); border-color: var(--border2); }
+.drawer-btn.danger { color: var(--red); border-color: #fca5a5; }
+.drawer-btn.danger:hover { background: var(--red-dim); }
+.drawer-btn.primary { background: var(--solar); border-color: var(--solar); color: #1c1c1c; font-weight: 600; }
+.drawer-btn.primary:hover { opacity: 0.88; }
+
+/* OVERLAY */
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.2); z-index: 99; backdrop-filter: blur(2px);
+}
+.overlay.show { display: block; }
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--text); color: var(--surface);
+  padding: 10px 20px; border-radius: 24px;
+  font-size: 13px; font-weight: 500; z-index: 200;
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  pointer-events: none; white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">
+        <i class="ti ti-sun" style="font-size:20px;color:#1c1c1c"></i>
+      </div>
+      <div class="brand-name">SolarGrid</div>
+      <div class="brand-sub">Agboville Estate</div>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" onclick="setPage('Dashboard', this)">
+        <i class="ti ti-layout-dashboard"></i> Dashboard
+      </button>
+      <button class="nav-item" onclick="setPage('Live Meters', this)">
+        <i class="ti ti-device-desktop-analytics"></i> Meters
+      </button>
+      <button class="nav-item" onclick="setPage('Customers', this)">
+        <i class="ti ti-users"></i> Customers
+      </button>
+      <button class="nav-item" onclick="setPage('Vend Token', this)">
+        <i class="ti ti-coin"></i> Vend Token
+      </button>
+      <button class="nav-item" onclick="setPage('Reports', this)">
+        <i class="ti ti-chart-bar"></i> Reports
+      </button>
+      <button class="nav-item" onclick="setPage('Alerts', this)">
+        <i class="ti ti-bell"></i> Alerts
+        <span class="nav-badge">3</span>
+      </button>
+      <button class="nav-item" onclick="setPage('Settings', this)">
+        <i class="ti ti-settings"></i> Settings
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="font-size:13px;font-weight:500;">Chidi Okafor</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px;">+234 812 345 6789</div>
+      <span class="role-pill">Admin</span>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="page-title" id="page-title">Dashboard</div>
+      <div class="topbar-right">
+        <div class="grid-status">
+          <div class="pulse"></div> Grid Online — 18 meters active
+        </div>
+        <button class="alert-btn" onclick="openCustomer(2)">
+          <i class="ti ti-bell"></i> 3 Alerts
+          <div class="alert-dot"></div>
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- KPI STRIP -->
+      <div class="kpi-strip">
+        <div class="kpi solar">
+          <div class="kpi-label">Solar Output</div>
+          <div class="kpi-value">4.2<span class="kpi-unit">kW</span></div>
+          <div class="kpi-sub">↑ 12% vs yesterday</div>
+        </div>
+        <div class="kpi load">
+          <div class="kpi-label">Total Load</div>
+          <div class="kpi-value">3.1<span class="kpi-unit">kW</span></div>
+          <div class="kpi-sub">Headroom: 1.1 kW</div>
+        </div>
+        <div class="kpi revenue">
+          <div class="kpi-label">Today's Revenue</div>
+          <div class="kpi-value">₦12,480</div>
+          <div class="kpi-sub">38 kWh sold</div>
+        </div>
+        <div class="kpi batt">
+          <div class="kpi-label">Battery SoC</div>
+          <div class="kpi-value">72<span class="kpi-unit">%</span></div>
+          <div class="kpi-sub">~6.4 hrs backup</div>
+        </div>
+      </div>
+
+      <!-- SECTION GRID -->
+      <div class="section-grid" style="flex:1;min-height:0;">
+
+        <!-- METER TABLE -->
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">
+              <i class="ti ti-device-desktop-analytics" style="font-size:15px"></i> Live Meters
+            </div>
+            <input class="search-input" type="text" placeholder="Search customer…" oninput="filterMeters(this.value)">
+          </div>
+          <div class="meter-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Status</th>
+                  <th>Load</th>
+                  <th>Credit</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="meter-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="right-col">
+
+          <!-- ALERTS -->
+          <div class="panel" style="flex-shrink:0;">
+            <div class="panel-head">
+              <div class="panel-title">
+                <i class="ti ti-alert-triangle" style="font-size:15px"></i> Active Alerts
+              </div>
+            </div>
+            <div class="alert-list">
+              <div class="alert-item" onclick="openCustomer(2)">
+                <div class="alert-icon crit"><i class="ti ti-alert-circle"></i></div>
+                <div>
+                  <div class="alert-title">Overload — Mama Tee Shop</div>
+                  <div class="alert-desc">Load 2,340W (limit: 2,000W)</div>
+                  <div class="alert-time">3 min ago</div>
+                </div>
+              </div>
+              <div class="alert-item" onclick="openCustomer(5)">
+                <div class="alert-icon warn"><i class="ti ti-battery-1"></i></div>
+                <div>
+                  <div class="alert-title">Low credit — Flat 4B</div>
+                  <div class="alert-desc">₦280 remaining (~1.4 kWh)</div>
+                  <div class="alert-time">14 min ago</div>
+                </div>
+              </div>
+              <div class="alert-item">
+                <div class="alert-icon warn"><i class="ti ti-plug"></i></div>
+                <div>
+                  <div class="alert-title">Tamper detect — House 7</div>
+                  <div class="alert-desc">CT clamp anomaly detected</div>
+                  <div class="alert-time">1 hr ago</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BATTERY -->
+          <div class="panel batt-widget" style="flex-shrink:0;">
+            <div class="batt-label">Battery State of Charge</div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px;">
+              <div class="batt-pct">72%</div>
+              <div style="font-size:11px;color:var(--muted);">Discharging @ 1.1 kW</div>
+            </div>
+            <div class="batt-outer"><div class="batt-fill"></div></div>
+            <div class="batt-stats">
+              <span>0%</span>
+              <span style="color:var(--green);font-weight:500;">~6.4 hrs remain</span>
+              <span>100%</span>
+            </div>
+          </div>
+
+          <!-- ENERGY CHART -->
+          <div class="panel mini-chart" style="flex-shrink:0;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="font-size:12px;font-weight:600;">kWh sold this week</div>
+              <div style="font-size:11px;color:var(--muted);">Total: 258 kWh</div>
+            </div>
+            <div class="chart-bars" id="week-chart"></div>
+            <div class="chart-labels" id="week-labels"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+
+<!-- CUSTOMER DRAWER -->
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div class="drawer-title" id="drawer-name">—</div>
+    <button class="close-btn" onclick="closeDrawer()"><i class="ti ti-x"></i> Close</button>
+  </div>
+
+  <div class="drawer-section">
+    <div class="drawer-section-lbl">Meter Info</div>
+    <div class="info-row"><span class="info-key">Meter No.</span><span class="info-val" id="d-meter">—</span></div>
+    <div class="info-row"><span class="info-key">Address</span><span class="info-val" id="d-addr" style="font-family:'DM Sans',sans-serif;">—</span></div>
+    <div class="info-row"><span class="info-key">Phone</span><span class="info-val" id="d-phone">—</span></div>
+    <div class="info-row"><span class="info-key">Type</span><span class="info-val" id="d-type">—</span></div>
+    <div class="info-row"><span class="info-key">Status</span><span class="info-val" id="d-status">—</span></div>
+    <div class="info-row"><span class="info-key">Current load</span><span class="info-val" id="d-load">—</span></div>
+    <div class="info-row"><span class="info-key">Credit balance</span><span class="info-val" id="d-credit">—</span></div>
+  </div>
+
+  <div class="drawer-section">
+    <div class="drawer-section-lbl">Load Limit</div>
+    <div class="limit-control">
+      <input type="range" min="200" max="5000" step="100" value="1000"
+             id="limit-slider" oninput="updateLimit(this.value)">
+      <span class="limit-val" id="limit-display">1000W</span>
+    </div>
+    <div style="font-size:11px;color:var(--hint);margin-top:4px;">Relay trips automatically at this load</div>
+  </div>
+
+  <div class="drawer-section">
+    <div class="drawer-section-lbl">Vend Credit (₦200/kWh)</div>
+    <input class="token-input" type="number" min="100" placeholder="Enter amount e.g. 2000"
+           id="token-amount" oninput="calcToken(this.value)">
+    <div class="token-result" id="token-result">→ 10.0 kWh credit added</div>
+  </div>
+
+  <div class="drawer-section">
+    <div class="drawer-section-lbl">Usage — last 7 days (kWh)</div>
+    <div class="usage-bars" id="usage-bars"></div>
+  </div>
+
+  <div class="drawer-actions">
+    <button class="drawer-btn primary" onclick="vendCredit()">
+      <i class="ti ti-coin"></i> Vend Credit
+    </button>
+    <button class="drawer-btn" id="toggle-btn" onclick="toggleMeter()">
+      <i class="ti ti-plug"></i> <span id="toggle-lbl">Disconnect</span>
+    </button>
+    <button class="drawer-btn danger" onclick="showToast('Tamper report sent to technician')">
+      <i class="ti ti-alert-triangle"></i> Flag
+    </button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const RATE = 200;
+
+const customers = [
+  { id:0, name:'Mr. Emeka Nwosu',      addr:'House 3, Palm Avenue',  phone:'0812-345-6789', meter:'SGM-001', status:'on',     loadW:420,  limitW:1000, creditNgn:3400,  type:'Home' },
+  { id:1, name:'Barbing Lounge XL',    addr:'Shop 1, Gate Area',     phone:'0803-211-9900', meter:'SGM-002', status:'on',     loadW:1820, limitW:2000, creditNgn:6200,  type:'Shop' },
+  { id:2, name:'Mama Tee Provisions',  addr:'Shop 5, Main Street',   phone:'0701-555-0033', meter:'SGM-003', status:'on',     loadW:2340, limitW:2000, creditNgn:1100,  type:'Shop' },
+  { id:3, name:'Rev. Adeyemi',         addr:'House 11, Mango Close', phone:'0814-767-0012', meter:'SGM-004', status:'on',     loadW:310,  limitW:1000, creditNgn:8900,  type:'Home' },
+  { id:4, name:'Funmi Beauty Palace',  addr:'Shop 2, Market Street', phone:'0905-120-4455', meter:'SGM-005', status:'off',    loadW:0,    limitW:1500, creditNgn:0,     type:'Shop' },
+  { id:5, name:'Flat 4B — Ade',        addr:'Block B, Apartment 4',  phone:'0816-345-7890', meter:'SGM-006', status:'on',     loadW:580,  limitW:800,  creditNgn:280,   type:'Home' },
+  { id:6, name:'Tanwa Cold Store',     addr:'Shop 9, Back Road',     phone:'0907-654-3210', meter:'SGM-007', status:'on',     loadW:700,  limitW:1500, creditNgn:12000, type:'Shop' },
+  { id:7, name:'Pastor Bello',         addr:'House 7, Calvary Lane', phone:'0813-002-1188', meter:'SGM-008', status:'tamper', loadW:210,  limitW:1000, creditNgn:3800,  type:'Home' },
+  { id:8, name:'Mama Ngozi Kitchen',   addr:'Shop 3, Food Lane',     phone:'0812-000-5511', meter:'SGM-009', status:'on',     loadW:950,  limitW:1500, creditNgn:5400,  type:'Shop' },
+  { id:9, name:'Engineer Tunde',       addr:'House 15, Tech Rd',     phone:'0803-333-7722', meter:'SGM-010', status:'on',     loadW:480,  limitW:1000, creditNgn:2100,  type:'Home' },
+];
+
+let selectedId = null;
+
+function getStatusPill(s) {
+  if (s === 'on')     return '<span class="status-pill on">ON</span>';
+  if (s === 'off')    return '<span class="status-pill off">OFF</span>';
+  if (s === 'tamper') return '<span class="status-pill low">TAMPER</span>';
+  return '';
+}
+
+function getLoadColor(w, limit) {
+  const pct = limit ? w / limit : 0;
+  if (pct > 0.9) return '#EF4444';
+  if (pct > 0.7) return '#F59E0B';
+  return '#10B981';
+}
+
+function renderTable(list) {
+  const tbody = document.getElementById('meter-tbody');
+  tbody.innerHTML = list.map(c => {
+    const pct = c.limitW ? Math.min(c.loadW / c.limitW, 1) : 0;
+    const color = getLoadColor(c.loadW, c.limitW);
+    const creditClass = c.creditNgn < 500 ? 'credit-low' : '';
+    const isSelected = selectedId === c.id;
+    return `<tr class="${isSelected ? 'selected' : ''}" onclick="openCustomer(${c.id})">
+      <td>
+        <div class="meter-name">${c.name}</div>
+        <div class="meter-addr">${c.meter} · ${c.type}</div>
+      </td>
+      <td>${getStatusPill(c.status)}</td>
+      <td>
+        <div class="load-bar-wrap">
+          <div class="load-bar-bg">
+            <div class="load-bar-fill" style="width:${Math.round(pct*100)}%;background:${color}"></div>
+          </div>
+          <div class="load-val">${c.loadW}W</div>
+        </div>
+      </td>
+      <td><span class="credit-val ${creditClass}">₦${c.creditNgn.toLocaleString()}</span></td>
+      <td>
+        <div class="action-btns">
+          <button class="btn-sm ${c.status==='on'?'danger':'success'}"
+            onclick="event.stopPropagation();quickToggle(${c.id})">
+            ${c.status==='on' ? 'Cut' : 'Conn'}
+          </button>
+          <button class="btn-sm" onclick="event.stopPropagation();openCustomer(${c.id})">Detail</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function filterMeters(q) {
+  const filtered = customers.filter(c =>
+    c.name.toLowerCase().includes(q.toLowerCase()) ||
+    c.meter.toLowerCase().includes(q.toLowerCase()) ||
+    c.addr.toLowerCase().includes(q.toLowerCase())
+  );
+  renderTable(filtered);
+}
+
+function quickToggle(id) {
+  const c = customers[id];
+  c.status = c.status === 'on' ? 'off' : 'on';
+  if (c.status === 'off') c.loadW = 0;
+  renderTable(customers);
+  showToast(c.status === 'on' ? `${c.name} reconnected` : `${c.name} disconnected`);
+  if (selectedId === id) refreshDrawer(id);
+}
+
+function openCustomer(id) {
+  selectedId = id;
+  renderTable(customers);
+  refreshDrawer(id);
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+
+function refreshDrawer(id) {
+  const c = customers[id];
+  document.getElementById('drawer-name').textContent = c.name;
+  document.getElementById('d-meter').textContent = c.meter;
+  document.getElementById('d-addr').textContent = c.addr;
+  document.getElementById('d-phone').textContent = c.phone;
+  document.getElementById('d-type').textContent = c.type;
+  document.getElementById('d-status').textContent = c.status.toUpperCase();
+  document.getElementById('d-load').textContent = c.loadW + 'W / ' + c.limitW + 'W limit';
+  document.getElementById('d-credit').textContent = '₦' + c.creditNgn.toLocaleString();
+  document.getElementById('limit-slider').value = c.limitW;
+  document.getElementById('limit-display').textContent = c.limitW + 'W';
+  document.getElementById('toggle-lbl').textContent = c.status === 'on' ? 'Disconnect' : 'Reconnect';
+  document.getElementById('token-amount').value = '';
+  document.getElementById('token-result').style.display = 'none';
+  // Usage bars
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const vals = [4.1, 5.8, 3.2, 6.6, 5.1, 7.2, 4.8].map(v => +(v * (0.6 + Math.random() * 0.8)).toFixed(1));
+  const maxV = Math.max(...vals);
+  document.getElementById('usage-bars').innerHTML = days.map((d, i) => `
+    <div class="usage-row">
+      <span class="usage-day">${d.slice(0,2)}</span>
+      <div class="usage-track">
+        <div class="usage-fill" style="width:${Math.round(vals[i]/maxV*100)}%"></div>
+      </div>
+      <span class="usage-kwh">${vals[i].toFixed(1)}</span>
+    </div>`).join('');
+}
+
+function closeDrawer() {
+  selectedId = null;
+  renderTable(customers);
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+function updateLimit(v) {
+  document.getElementById('limit-display').textContent = v + 'W';
+  if (selectedId !== null) {
+    customers[selectedId].limitW = parseInt(v);
+    document.getElementById('d-load').textContent = customers[selectedId].loadW + 'W / ' + v + 'W limit';
+    renderTable(customers);
+  }
+}
+
+function calcToken(v) {
+  const amt = parseFloat(v);
+  const result = document.getElementById('token-result');
+  if (!isNaN(amt) && amt > 0) {
+    const kwh = (amt / RATE).toFixed(1);
+    result.textContent = `→ ${kwh} kWh will be added (@ ₦${RATE}/kWh)`;
+    result.style.display = 'block';
+  } else {
+    result.style.display = 'none';
+  }
+}
+
+function vendCredit() {
+  const amt = parseFloat(document.getElementById('token-amount').value);
+  if (isNaN(amt) || amt <= 0 || selectedId === null) {
+    showToast('Enter a valid amount first');
+    return;
+  }
+  customers[selectedId].creditNgn += amt;
+  const kwh = (amt / RATE).toFixed(1);
+  document.getElementById('d-credit').textContent = '₦' + customers[selectedId].creditNgn.toLocaleString();
+  document.getElementById('token-amount').value = '';
+  document.getElementById('token-result').style.display = 'none';
+  renderTable(customers);
+  showToast(`₦${amt.toLocaleString()} (${kwh} kWh) credited to ${customers[selectedId].name}`);
+}
+
+function toggleMeter() {
+  if (selectedId === null) return;
+  quickToggle(selectedId);
+}
+
+function setPage(name, el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('page-title').textContent = name;
+  showToast(`${name} — coming soon in full build`);
+}
+
+// Week chart
+const weekData  = [28, 32, 36, 41, 38, 45, 38];
+const weekDays  = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const maxKwh    = Math.max(...weekData);
+document.getElementById('week-chart').innerHTML = weekData.map((v, i) =>
+  `<div class="bar" title="${v} kWh"
+    style="height:${Math.round(v/maxKwh*100)}%;background:${i===6?'var(--solar)':'var(--border2)'};">
+  </div>`).join('');
+document.getElementById('week-labels').innerHTML = weekDays.map(d =>
+  `<span class="chart-lbl">${d.slice(0,2)}</span>`).join('');
+
+// Toast
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// Initial render
+renderTable(customers);
+</script>
+</body>
+</html>
